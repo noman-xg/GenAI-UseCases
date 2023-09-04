@@ -1,9 +1,0 @@
-__pycache__
-vectorStore/*
-go.mod
-go.sum
-
-src/go.mod
-src/go.sum
-src/vectorStore
-src/__pycache__

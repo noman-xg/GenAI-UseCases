@@ -71,7 +71,6 @@ func integratedHandler(userInput json.RawMessage) (string, error) {
 	}
 	timeDelta(start, "refineEmbeddingResponse()")
 
-	fmt.Println("responseeeeeeeeeeeeeeeee, ", refinedResponse)
 	err = saveToFile([]byte(refinedResponse), TerrFile)
 	if err != nil {
 		return "", fmt.Errorf("error writing to file: %w", err)
@@ -135,24 +134,12 @@ func setTone(client *openai.Client, sys_msg, usr_msg string, isRefine bool) (str
 	return fmt.Sprintf(resp.Choices[0].Message.Content), nil
 }
 
-func fetchConfigFromVecStore(query string) (string, error) {
-	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query)
-	pythonCmd.Env = append(os.Environ(), openAIKey)
-	output, err := pythonCmd.CombinedOutput()
-	fmt.Println(query)
-	if err != nil {
-		return "", fmt.Errorf("running Python script: %v", string(output))
-	}
-
-	return string(output), nil
-}
-
 func refineEmbeddingResponse(usr_msg json.RawMessage, userInput string) (string, error) {
 	user_message := userInput + "\n" + Delimiter + "\n" + string(usr_msg) + Delimiter
 	system_message := Prompts("refinement")
 	response, err := setTone(client, system_message, user_message, true)
 	if err != nil {
-		return "", fmt.Errorf("error in refinement of config: %w ", err)
+		return "", err
 	}
 	return response, nil
 }
@@ -162,4 +149,16 @@ func initialConfig(query string) (string, error) {
 	response, _ := setTone(client, sys_msg, query, false)
 	fmt.Println(response)
 	return strings.Split(response, "```")[0], nil
+}
+
+func fetchConfigFromVecStore(query, path string) (string, error) {
+	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path)
+	pythonCmd.Env = append(os.Environ(), openAIKey)
+	output, err := pythonCmd.CombinedOutput()
+	fmt.Println(query)
+	if err != nil {
+		return "", fmt.Errorf("running Python script: %v", string(output))
+	}
+
+	return string(output), nil
 }

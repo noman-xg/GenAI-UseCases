@@ -1,6 +1,0 @@
-```hcl
-#tfvars
-
-#tfvars
-
-```

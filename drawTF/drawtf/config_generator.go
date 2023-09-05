@@ -50,12 +50,10 @@ func integratedHandler(userInput json.RawMessage) (string, error) {
 	// }
 	// timeDelta(start, "fetchConfigFromVecStore()")
 
-	start = time.Now()
 	response, err := initialConfig(userQuery)
 	if err != nil {
 		return "", fmt.Errorf("error building initial terraform configuration: %w", err)
 	}
-	timeDelta(start, "experiment()")
 
 	// start = time.Now()
 	// response, err := readOutput(FilePath)
@@ -64,12 +62,10 @@ func integratedHandler(userInput json.RawMessage) (string, error) {
 	// }
 	// timeDelta(start, "readOutput()")
 
-	start = time.Now()
 	refinedResponse, err := refineEmbeddingResponse(json.RawMessage([]byte(response)), string(userInput))
 	if err != nil {
 		return "", fmt.Errorf("error refining the response: %w", err)
 	}
-	timeDelta(start, "refineEmbeddingResponse()")
 
 	err = saveToFile([]byte(refinedResponse), TerrFile)
 	if err != nil {

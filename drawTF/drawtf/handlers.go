@@ -19,6 +19,7 @@ func GenerateEmbeddings(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
+
 	response, err := fetchConfigFromVecStore(m.Text, m.Path)
 	if err != nil {
 		fmt.Println("error is", err)

@@ -31,7 +31,7 @@ func saveToFile(content []byte, path string) error {
 	filepath := path
 	err := os.WriteFile(filepath, content, 0644)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		fmt.Println("Error writitng file:", err)
 		return err
 	}
 	return nil

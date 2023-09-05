@@ -18,7 +18,7 @@ const (
 	PythonInterpreter = "python3"
 	EmbeddingsScript  = "./scripts/embeddings.py"
 	GradioLauncher    = "./scripts/chat-portal.py"
-	FilePath          = "./file.txt"
+	FilePath          = "./initialConf.txt"
 	TerrFile          = "./main.tf"
 	Delimiter         = "####"
 	Step4Start        = "Step 4:"
@@ -30,7 +30,7 @@ var (
 	client    = openai.NewClient(openAIKey)
 )
 
-func integratedHandler(userInput json.RawMessage) (string, error) {
+func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (string, error) {
 
 	if openAIKey == "" {
 		log.Fatal("OPENAI_API_KEY not found.")
@@ -43,29 +43,30 @@ func integratedHandler(userInput json.RawMessage) (string, error) {
 	}
 	timeDelta(start, "generateUserQuery()")
 
-	// start = time.Now()
-	// _, err = fetchConfigFromVecStore(userQuery)
-	// if err != nil {
-	// 	return "", fmt.Errorf("error getting response from VectorStore: %w", err)
-	// }
-	// timeDelta(start, "fetchConfigFromVecStore()")
+	var initialResponse string
+	if isRag {
+		_, err = fetchConfigFromVecStore(userQuery, docsPath, isRag)
+		if err != nil {
+			return "", fmt.Errorf("error getting response from VectorStore: %w", err)
+		}
 
-	response, err := initialConfig(userQuery)
-	if err != nil {
-		return "", fmt.Errorf("error building initial terraform configuration: %w", err)
+		initialResponse, err = readOutput(FilePath)
+		if err != nil {
+			return "", fmt.Errorf("error reading python process output: %w", err)
+		}
+
+	} else {
+		initialResponse, err = initialConfig(userQuery)
+		if err != nil {
+			return "", fmt.Errorf("error building initial terraform configuration: %w", err)
+		}
 	}
 
-	// start = time.Now()
-	// response, err := readOutput(FilePath)
-	// if err != nil {
-	// 	return "", fmt.Errorf("error reading python process output: %w", err)
-	// }
-	// timeDelta(start, "readOutput()")
-
-	refinedResponse, err := refineEmbeddingResponse(json.RawMessage([]byte(response)), string(userInput))
+	refinedResponse, err := refineEmbeddingResponse(json.RawMessage([]byte(initialResponse)), string(userInput))
 	if err != nil {
 		return "", fmt.Errorf("error refining the response: %w", err)
 	}
+	timeDelta(start, "refineEmbeddingResponse()")
 
 	err = saveToFile([]byte(refinedResponse), TerrFile)
 	if err != nil {
@@ -147,8 +148,9 @@ func initialConfig(query string) (string, error) {
 	return strings.Split(response, "```")[0], nil
 }
 
-func fetchConfigFromVecStore(query, path string) (string, error) {
-	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path)
+func fetchConfigFromVecStore(query, path string, isRag bool) (string, error) {
+	rag := fmt.Sprintf("%v", isRag)
+	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path, rag)
 	pythonCmd.Env = append(os.Environ(), openAIKey)
 	output, err := pythonCmd.CombinedOutput()
 	fmt.Println(query)

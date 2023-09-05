@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/noman-xg/GenAI-UseCases/tree/main/drawTF/drawtf"
+	"github.com/noman-xg/GenAI-UseCases/drawtf"
 )
 
 func main() {

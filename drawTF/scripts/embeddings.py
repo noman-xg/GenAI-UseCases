@@ -17,7 +17,7 @@ import os
 __import__('pysqlite3')
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-def main(query,path):
+def main(query,path, isRag=False):
     
     # folder_path = os.path.join ('..', 'vectorStore')
     # vector_store_exists = os.path.isdir (folder_path)
@@ -28,9 +28,7 @@ def main(query,path):
     #     texts=loadAndSplitDocs(path)
     texts=loadAndSplitDocs(path)
     db, retriever = checkAndQueryVectorStore(texts,query) 
-    print("Retriever: ", retriever)
-    result = runUserQuery(retriever,query)  
-    print("Result: ", result)
+    result = runUserQuery(retriever,query,isRag)  
     
     # Visualizations for upcoming demo.
     # chunks = [str(text).split('=', 1)[-1][:-1] for text in texts]
@@ -39,7 +37,18 @@ def main(query,path):
     
     # df = pd.DataFrame({'chunks': chunks, 'embeddings': embDict['embeddings']})
     # df.to_csv('output.csv', index=False)
-#    print(result)
+    print(result)
+
+    filename = "initialConf.txt"
+    if os.path.exists(filename):
+        # If the file exists, append content to it
+        with open(filename, 'w') as file:
+            file.write(result)
+    else:
+        # If the file doesn't exist, create a new one
+        with open(filename, 'x') as file:
+            file.write(result)
+                
     return result
 
 
@@ -78,7 +87,7 @@ def checkAndQueryVectorStore(texts,query):
     return db,retriever
 
 
-def runUserQuery(retriever, query):
+def runUserQuery(retriever, query, isRag):
     
     llm = ChatOpenAI(model="gpt-3.5-turbo-16k-0613",
               temperature=0.5,
@@ -86,10 +95,12 @@ def runUserQuery(retriever, query):
               max_tokens = 1000)
 
     
-   # extraction_prompt = PromptTemplate(input_variables=['context', 'question' ],template=prompt)
-    extraction_prompt = PromptTemplate(input_variables=['context', 'question'],template="You are an expert at generating Terraform configurations for multiple cloud providers such as AWS,GCP and Azure.Use the following context output either the terraform configuration or list of resources according to the Question. Don't make up any answer, if you don't know the answer just say i dont't know. \n\n{context}\n\nQuestion: {question}\n Helpful Answer:")
+    if not isRag:
+        extraction_prompt = PromptTemplate(input_variables=['context', 'question'],template="You are an expert at generating Terraform configurations for multiple cloud providers such as AWS,GCP and Azure.Use the following context output either the terraform configuration or list of resources according to the Question. Don't make up any answer, if you don't know the answer just say i dont't know. \n\n{context}\n\nQuestion: {question}\n Helpful Answer:")
+    else:
+        extraction_prompt = PromptTemplate(input_variables=['context', 'question' ],template=prompt)
+    
     kwargs = {"prompt": extraction_prompt}
-    print(extraction_prompt)
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", chain_type_kwargs=kwargs,retriever=retriever) 
 
   #  print("Running Query: ", qa.run(query))
@@ -115,8 +126,10 @@ if __name__ == "__main__":
     # Step 3: Define the argument 'query'
     parser.add_argument("query", type=str, help="The query to be processed")
     parser.add_argument("path", type=str, help="Path to the directory containing all documents.")
+    parser.add_argument("isRag", type=str, help="True if its RAG else it's chat with your data use case.")
+
     # Step 4: Parse the arguments
     args = parser.parse_args()
 
     #Call the main function with the 'query' argument
-    main(args.query,args.path)
+    main(args.query,args.path,args.isRag)

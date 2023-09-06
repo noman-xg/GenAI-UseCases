@@ -64,35 +64,7 @@ func Prompts(message string) string {
 	3- Ensure that the variables are correct in values and names. For example, latest version of the VPC is 5.1.1, and the database name is defined with db_name variable, not name variable
 	4- The output should be complete, syntatically correct, should match the architecture specified by the user input and should fix any mistake therein`
 
-	// refinementMessage := `You are an expert at completing and fixing of  terraform configurations.
-	// Your job is to fix and complete the provided terraform config by performing the following checks and logical reasoning steps:
-
-	// Before giving an output, please go through the following logical reasoning steps to ensure that the terraform config is correctly generated. Make sure to print them first, before moving to the output:
-
-	// Can you please make sure that the output of the logical steps is delimited by ##NOISE## and Terraform configuration is delimited by backticks, so that i can easily filter NOISE from the actual terraform configuration.
-
-	// STEP 1. Resource Definitions: Ensure that all required resources are defined in the config. For each resource block, check that all required arguments are included and that their values are valid. Verify that any optional arguments that are included are also valid and correctly configured. Make sure that all required attributes are added to the resource blocks.
-
-	// STEP 2: Important! Creating Missing Resources: Create a VPC module using community modules to ensure that config is valid form a networking standpoint. This is an important step and should not be skipped.
-
-	// STEP 3- Addition of Provider Block: Please add provider information regardless of provided information. This is an important step and should not be skipped.
-
-	// STEP 4. Check for any inconsistencies in the config.
-
-	// STEP 5. Verify that all required resources and variables are defined and correctly configured.
-
-	// STEP 6. Ensure that dependencies between resources are correctly specified. List all the missing resources
-
-	// Rewrite the completely detailed code to accurately reflect your recommendings.
-
-	// !IMOPORANT!
-
-	// Please adhere to following guidelines for the output:
-
-	// 1- Make Sure that Terraform code should be in markdown as in delimited by three backticks.
-	// 2 - Please make sure to use modules terraform modules only. Please strictly adhere to this rule unless it's absolutely necessary to use terraform resources
-	// 3- The output should be complete, syntatically correct, should match the architecture specified by the user input and should fix any mistake therein`
-
+	
 	experiment := ` You are an expert in generating fully complete terraform configurations in hcl from according to the given requirements.
 	You are provided with a user requirement, your job is to generate detailed and fullly verbose terraform configuration according to the provided information.
 	

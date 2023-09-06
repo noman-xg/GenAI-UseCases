@@ -1,13 +1,11 @@
-// Package main is the entry point for the Go program.
 package main
 
 // Import necessary packages for the application.
 import (
-	"github.com/gin-gonic/gin"                // Import the Gin web framework for building web APIs.
-	"github.com/noman-xg/GenAI-UseCases/drawtf" // Import a custom package, possibly containing application-specific logic.
+	"github.com/gin-gonic/gin"
+	"github.com/noman-xg/GenAI-UseCases/drawtf"
 )
 
-// The main function is the entry point for the application.
 func main() {
 	// Create a new Gin router with default middleware.
 	r := gin.Default()
@@ -21,6 +19,6 @@ func main() {
 	r.POST("/tfconfig", drawtf.GenerateTfconfig)
 	r.POST("/start-gradio", drawtf.StartGradio)
 
-	// Start the Gin HTTP server on port 8082. This will listen for incoming HTTP requests.
+	// Start the Gin HTTP server on port 8082.
 	r.Run(":8082")
 }

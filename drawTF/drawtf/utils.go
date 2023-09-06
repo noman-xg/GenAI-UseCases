@@ -42,8 +42,9 @@ func saveToFile(content []byte, path string) error {
 // timeDelta logs the time taken by a script and appends it to a "time.log" file.
 func timeDelta(start time.Time, name string) {
 	log.Println("\n*********************")
-	log.Printf("%s script called ", name)
-	log.Printf("%s takes: %s ", name, time.Since(start))
+	log.Printf("%s called ", name)
+	log.Printf("%s took: %s ", name, time.Since(start))
+	log.Println("\n*********************")
 	time := fmt.Sprintf("%s takes: %s \n", name, time.Since(start)) + "\n\n"
 	file, err := os.OpenFile("time.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -51,7 +52,6 @@ func timeDelta(start time.Time, name string) {
 	}
 	defer file.Close()
 	file.Write([]byte(time))
-	log.Println("*********************\n")
 }
 
 // launchGradio launches the Gradio application using the specified Python interpreter and Gradio launcher.

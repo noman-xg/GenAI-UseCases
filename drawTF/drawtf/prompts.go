@@ -64,8 +64,7 @@ func Prompts(message string) string {
 	3- Ensure that the variables are correct in values and names. For example, latest version of the VPC is 5.1.1, and the database name is defined with db_name variable, not name variable
 	4- The output should be complete, syntatically correct, should match the architecture specified by the user input and should fix any mistake therein`
 
-	
-	experiment := ` You are an expert in generating fully complete terraform configurations in hcl from according to the given requirements.
+	initial := ` You are an expert in generating fully complete terraform configurations in hcl from according to the given requirements.
 	You are provided with a user requirement, your job is to generate detailed and fullly verbose terraform configuration according to the provided information.
 	
     PLease follow the following checks and logical reasoning steps to complete the task:
@@ -113,8 +112,8 @@ func Prompts(message string) string {
 		return systemMessage
 	} else if message == "refinement" {
 		return refinementMessage
-	} else if message == "experiment" {
-		return experiment
+	} else if message == "initial" {
+		return initial
 	}
 	return userMessage
 }

@@ -15,7 +15,7 @@ type Message struct {
 	Path string `json:"path"`
 }
 
-// GenerateEmbeddings is an HTTP handler that generates embeddings based on the input message.
+// HTTP handler:  that generates embeddings based on the input message.
 func GenerateEmbeddings(c *gin.Context) {
 	var m Message
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -23,7 +23,7 @@ func GenerateEmbeddings(c *gin.Context) {
 		return
 	}
 
-	// Call a function to fetch configuration from VecStore.
+	// Fetch configuration from VecStore.
 	response, err := fetchConfigFromVecStore(m.Text, m.Path, false)
 	if err != nil {
 		fmt.Println("error is", err)
@@ -33,7 +33,7 @@ func GenerateEmbeddings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"response": response})
 }
 
-// GenerateTfconfig is an HTTP handler that generates a TensorFlow configuration based on query parameters and JSON request.
+// HTTP handler:  generates a Terraform configuration based on query parameters and JSON request.
 func GenerateTfconfig(c *gin.Context) {
 
 	// Retrieve 'path' query parameter.
@@ -56,7 +56,7 @@ func GenerateTfconfig(c *gin.Context) {
 	}
 
 	// Call an integrated handler function with the parsed data.
-	refinementResponse, err := integratedHandler(req, docsPath, isRag)
+	refinementResponse, err := configGenerator(req, docsPath, isRag)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": err})

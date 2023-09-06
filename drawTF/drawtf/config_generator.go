@@ -9,48 +9,43 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	openai "github.com/sashabaranov/go-openai"
 )
 
 // Constants used in the package.
 const (
-	PythonInterpreter = "python3"        // Path to the Python interpreter.
-	EmbeddingsScript  = "./scripts/embeddings.py" // Path to the embeddings Python script.
+	PythonInterpreter = "python3"                  // Path to the Python interpreter.
+	EmbeddingsScript  = "./scripts/embeddings.py"  // Path to the embeddings Python script.
 	GradioLauncher    = "./scripts/chat-portal.py" // Path to the Gradio launcher script.
 	FilePath          = "./initialConf.txt"        // Path to a file used for temporary storage.
-	TerrFile          = "./main.tf"               // Path to a Terraform configuration file.
-	Delimiter         = "####"                    // Delimiter used in messages.
-	Step4Start        = "Step 4:"                 // Start marker for a specific step in a response.
-	Step4End          = "{4-END}"                 // End marker for a specific step in a response.
+	TerrFile          = "./main.tf"                // Path to a Terraform configuration file.
+	Delimiter         = "####"                     // Delimiter used in messages.
+	Step4Start        = "Step 4:"                  // Start marker for a specific step in a response.
+	Step4End          = "{4-END}"                  // End marker for a specific step in a response.
 )
 
 // Variables used in the package.
 var (
 	openAIKey = os.Getenv("OPENAI_API_KEY") // Retrieve the OpenAI API key from the environment variable.
-	client    = openai.NewClient(openAIKey)  // Create an OpenAI client.
+	client    = openai.NewClient(openAIKey) // Create an OpenAI client.
 )
 
 // integratedHandler handles the integration of various functionalities.
-func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (string, error) {
+func configGenerator(userInput json.RawMessage, docsPath string, isRag bool) (string, error) {
 	// Check if the OpenAI API key is set.
 	if openAIKey == "" {
 		log.Fatal("OPENAI_API_KEY not found.")
 	}
 
-	start := time.Now()
-
-	// Generate a user query.
+	// Generate a prompt from the JSON.
 	userQuery, err := generateUserQuery(userInput)
 	if err != nil {
 		return "", fmt.Errorf(" Error building initial user query: %w", err)
 	}
-	timeDelta(start, "generateUserQuery()")
 
 	var initialResponse string
-
-	// If isRag is true, fetch a configuration from VectorStore.
+	// If isRag is true, fetch a configuration from VectorStore, else use OpenAI API for the config generation.
 	if isRag {
 		_, err = fetchConfigFromVecStore(userQuery, docsPath, isRag)
 		if err != nil {
@@ -75,7 +70,6 @@ func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (
 	if err != nil {
 		return "", fmt.Errorf("error refining the response: %w", err)
 	}
-	timeDelta(start, "refineEmbeddingResponse()")
 
 	// Save the refined response to a file.
 	err = saveToFile([]byte(refinedResponse), TerrFile)
@@ -157,11 +151,10 @@ func refineEmbeddingResponse(usr_msg json.RawMessage, userInput string) (string,
 
 // initialConfig builds an initial Terraform configuration.
 func initialConfig(query string) (string, error) {
-	sys_msg := Prompts("experiment")
+	sys_msg := Prompts("initial")
 
 	// Set the tone for the initial configuration.
 	response, _ := setTone(client, sys_msg, query, false)
-	fmt.Println(response)
 	return strings.Split(response, "```")[0], nil
 }
 
@@ -171,7 +164,6 @@ func fetchConfigFromVecStore(query, path string, isRag bool) (string, error) {
 	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path, rag)
 	pythonCmd.Env = append(os.Environ(), openAIKey)
 	output, err := pythonCmd.CombinedOutput()
-	fmt.Println(query)
 	if err != nil {
 		return "", fmt.Errorf("running Python script: %v", string(output))
 	}

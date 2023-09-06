@@ -14,29 +14,34 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+// Constants used in the package.
 const (
-	PythonInterpreter = "python3"
-	EmbeddingsScript  = "./scripts/embeddings.py"
-	GradioLauncher    = "./scripts/chat-portal.py"
-	FilePath          = "./initialConf.txt"
-	TerrFile          = "./main.tf"
-	Delimiter         = "####"
-	Step4Start        = "Step 4:"
-	Step4End          = "{4-END}"
+	PythonInterpreter = "python3"        // Path to the Python interpreter.
+	EmbeddingsScript  = "./scripts/embeddings.py" // Path to the embeddings Python script.
+	GradioLauncher    = "./scripts/chat-portal.py" // Path to the Gradio launcher script.
+	FilePath          = "./initialConf.txt"        // Path to a file used for temporary storage.
+	TerrFile          = "./main.tf"               // Path to a Terraform configuration file.
+	Delimiter         = "####"                    // Delimiter used in messages.
+	Step4Start        = "Step 4:"                 // Start marker for a specific step in a response.
+	Step4End          = "{4-END}"                 // End marker for a specific step in a response.
 )
 
+// Variables used in the package.
 var (
-	openAIKey = os.Getenv("OPENAI_API_KEY")
-	client    = openai.NewClient(openAIKey)
+	openAIKey = os.Getenv("OPENAI_API_KEY") // Retrieve the OpenAI API key from the environment variable.
+	client    = openai.NewClient(openAIKey)  // Create an OpenAI client.
 )
 
+// integratedHandler handles the integration of various functionalities.
 func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (string, error) {
-
+	// Check if the OpenAI API key is set.
 	if openAIKey == "" {
 		log.Fatal("OPENAI_API_KEY not found.")
 	}
 
 	start := time.Now()
+
+	// Generate a user query.
 	userQuery, err := generateUserQuery(userInput)
 	if err != nil {
 		return "", fmt.Errorf(" Error building initial user query: %w", err)
@@ -44,30 +49,35 @@ func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (
 	timeDelta(start, "generateUserQuery()")
 
 	var initialResponse string
+
+	// If isRag is true, fetch a configuration from VectorStore.
 	if isRag {
 		_, err = fetchConfigFromVecStore(userQuery, docsPath, isRag)
 		if err != nil {
 			return "", fmt.Errorf("error getting response from VectorStore: %w", err)
 		}
 
+		// Read the output from a file.
 		initialResponse, err = readOutput(FilePath)
 		if err != nil {
 			return "", fmt.Errorf("error reading python process output: %w", err)
 		}
-
 	} else {
+		// Build an initial Terraform configuration.
 		initialResponse, err = initialConfig(userQuery)
 		if err != nil {
 			return "", fmt.Errorf("error building initial terraform configuration: %w", err)
 		}
 	}
 
+	// Refine the embedding response.
 	refinedResponse, err := refineEmbeddingResponse(json.RawMessage([]byte(initialResponse)), string(userInput))
 	if err != nil {
 		return "", fmt.Errorf("error refining the response: %w", err)
 	}
 	timeDelta(start, "refineEmbeddingResponse()")
 
+	// Save the refined response to a file.
 	err = saveToFile([]byte(refinedResponse), TerrFile)
 	if err != nil {
 		return "", fmt.Errorf("error writing to file: %w", err)
@@ -76,17 +86,20 @@ func integratedHandler(userInput json.RawMessage, docsPath string, isRag bool) (
 	return refinedResponse, nil
 }
 
+// generateUserQuery generates a user query.
 func generateUserQuery(usr_msg json.RawMessage) (string, error) {
 	var assistant_mesages []string
 	user_message := string(usr_msg)
 	system_message := Prompts("system")
 
+	// Set the tone of the response.
 	response, err := setTone(client, system_message, user_message, false)
 	if err != nil {
 		return "", err
 	}
 	assistant_mesages = append(assistant_mesages, response)
 
+	// Find and extract a specific section of the response.
 	startIndex := strings.Index(response, Step4Start)
 	endIndex := strings.Index(response, Step4End)
 
@@ -99,13 +112,11 @@ func generateUserQuery(usr_msg json.RawMessage) (string, error) {
 	return strings.ReplaceAll(strings.TrimSpace(step4Query), "\\", ""), nil
 }
 
+// setTone sets the tone of the response using OpenAI.
 func setTone(client *openai.Client, sys_msg, usr_msg string, isRefine bool) (string, error) {
 	model := openai.GPT3Dot5Turbo16K
 
-	// if isRefine {
-	// 	model = openai.GPT4
-	// }
-
+	// Create a chat completion request to generate a response.
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -131,9 +142,12 @@ func setTone(client *openai.Client, sys_msg, usr_msg string, isRefine bool) (str
 	return fmt.Sprintf(resp.Choices[0].Message.Content), nil
 }
 
+// refineEmbeddingResponse refines the embedding response.
 func refineEmbeddingResponse(usr_msg json.RawMessage, userInput string) (string, error) {
 	user_message := userInput + "\n" + Delimiter + "\n" + string(usr_msg) + Delimiter
 	system_message := Prompts("refinement")
+
+	// Set the tone for refining the response.
 	response, err := setTone(client, system_message, user_message, true)
 	if err != nil {
 		return "", err
@@ -141,13 +155,17 @@ func refineEmbeddingResponse(usr_msg json.RawMessage, userInput string) (string,
 	return response, nil
 }
 
+// initialConfig builds an initial Terraform configuration.
 func initialConfig(query string) (string, error) {
 	sys_msg := Prompts("experiment")
+
+	// Set the tone for the initial configuration.
 	response, _ := setTone(client, sys_msg, query, false)
 	fmt.Println(response)
 	return strings.Split(response, "```")[0], nil
 }
 
+// fetchConfigFromVecStore fetches a configuration from VectorStore.
 func fetchConfigFromVecStore(query, path string, isRag bool) (string, error) {
 	rag := fmt.Sprintf("%v", isRag)
 	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path, rag)

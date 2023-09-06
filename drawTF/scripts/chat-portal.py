@@ -12,8 +12,9 @@ import pandas as pd
 import logging
 import sys
 import gradio as gr
+import re
 
-
+# Function to send a POST request with text data and retrieve a response
 def get_response(args):
     # Define the URL for the post call
     url = "http://127.0.0.1:8082/message"
@@ -31,8 +32,7 @@ def get_response(args):
     refined_val = get_value_between(return_val)
     return str(refined_val)
 
-import re
-
+# Function to extract content between triple backticks (```)
 def get_value_between(string):
   # Define a regular expression pattern that matches ``` followed by any characters until another ```
   pattern = r"```(.*)```"
@@ -45,28 +45,16 @@ def get_value_between(string):
   else:
     return None
 
-
+# Function to parse and format the response content
 def hcl_parser(args):
-
     args = str(args)
     args = args.replace("\\n", "\n")
     args = args.replace("\\", "")
     args = args.replace('"response":', "")
-
     return args
-if __name__ == "__main__":
-    # # Step 2: Create an ArgumentParser object
-    # parser = argparse.ArgumentParser(description="Script to process a query")
-    #
-    # # Step 3: Define the argument 'query'
-    # parser.add_argument("query", type=str, help="The query to be processed")
-    #
-    # # Step 4: Parse the arguments
-    # args = parser.parse_args()
 
-    # Call the main function with the 'query' argument
-    # get_response("give me an s3 module example")
-    print("i was launched hekandkjabsdkajsd")
+# Entry point of the script
+if __name__ == "__main__":
+    # Create a Gradio interface to interact with the function
     iface = gr.Interface(fn=get_response, inputs="text", outputs="text")
     iface.launch(share=True)
- 

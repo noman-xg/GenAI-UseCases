@@ -29,6 +29,8 @@ const (
 var (
 	openAIKey = os.Getenv("OPENAI_API_KEY") // Retrieve the OpenAI API key from the environment variable.
 	client    = openai.NewClient(openAIKey) // Create an OpenAI client.
+	//exp
+	contextMsg []string
 )
 
 // integratedHandler handles the integration of various functionalities.
@@ -82,7 +84,6 @@ func configGenerator(userInput json.RawMessage, docsPath string, isRag bool) (st
 
 // generateUserQuery generates a user query.
 func generateUserQuery(usr_msg json.RawMessage) (string, error) {
-	var assistant_mesages []string
 	user_message := string(usr_msg)
 	system_message := Prompts("system")
 
@@ -91,7 +92,6 @@ func generateUserQuery(usr_msg json.RawMessage) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	assistant_mesages = append(assistant_mesages, response)
 
 	// Find and extract a specific section of the response.
 	startIndex := strings.Index(response, Step4Start)
@@ -160,6 +160,12 @@ func initialConfig(query string) (string, error) {
 
 // fetchConfigFromVecStore fetches a configuration from VectorStore.
 func fetchConfigFromVecStore(query, path string, isRag bool) (string, error) {
+	fmt.Println("hello")
+	// exp
+	contextMsg = append(contextMsg, query)
+	query = strings.Join(contextMsg, " ")
+	// fmt.Println(query)
+	//exp
 	rag := fmt.Sprintf("%v", isRag)
 	pythonCmd := exec.Command(PythonInterpreter, EmbeddingsScript, query, path, rag)
 	pythonCmd.Env = append(os.Environ(), openAIKey)
@@ -167,6 +173,7 @@ func fetchConfigFromVecStore(query, path string, isRag bool) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("running Python script: %v", string(output))
 	}
-
+	//exp
+	contextMsg = append(contextMsg, string(output))
 	return string(output), nil
 }

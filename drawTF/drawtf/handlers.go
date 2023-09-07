@@ -40,8 +40,8 @@ func GenerateTfconfig(c *gin.Context) {
 	docsPath := c.Query("path")
 
 	// Retrieve 'rag' query parameter and parse it as a boolean.
+
 	isRag, err := strconv.ParseBool(c.Query("rag"))
-	fmt.Println("rag is   ", isRag)
 	if err != nil {
 		fmt.Println("error is", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Param. Rag should be boolean"})
@@ -56,14 +56,13 @@ func GenerateTfconfig(c *gin.Context) {
 	}
 
 	// Call an integrated handler function with the parsed data.
-	refinementResponse, err := configGenerator(req, docsPath, isRag)
-
+	tfConfig, err := configGenerator(req, docsPath, isRag)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": err})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"response": refinementResponse})
+	c.JSON(http.StatusOK, gin.H{"response": tfConfig})
 }
 
 // StartGradio is an HTTP handler that launches Gradio.

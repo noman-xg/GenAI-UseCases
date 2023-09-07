@@ -40,6 +40,7 @@ func saveToFile(content []byte, path string) error {
 }
 
 // timeDelta logs the time taken by a script and appends it to a "time.log" file.
+// TESTING
 func timeDelta(start time.Time, name string) {
 	log.Println("\n*********************")
 	log.Printf("%s called ", name)

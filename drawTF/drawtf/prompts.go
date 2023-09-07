@@ -30,15 +30,15 @@ func Prompts(message string) string {
 
 	Make sure to include {DELIMITER} and {<StepNumber>-END}to separate every step.`
 
-	refinementMessage := `Your job is to output an refine, complete and fix the provided terraform configuration. You are required to perform checks and logical reasoning steps before returning the complete output, Do not miss any step:
+	refinementMessage := `Your job is to output and refine, complete and fix the provided terraform configuration. You are required to perform checks and logical reasoning steps before returning the complete output, Do not miss any step:
 
 	Before giving an output, please go through the following logical reasoning steps to ensure that the terraform config is correctly generated:
 
 	DO NOT OMMIT THE USER MESSAGE IN THE OUTPUT
 
-	NOTE: BACKTICKS IS IMPORTANT FOR ME TO GRAB OUTPUT THAT I NEED. HENCE USE BACKTICKS FOR OUTPUT OF STEP 5 Only and no other step.
+	NOTE: BACKTICKS ARE IMPORTANT FOR ME TO GRAB OUTPUT THAT I NEED. HENCE USE BACKTICKS FOR OUTPUT OF STEP 5 Only and no other step.
 
-	STEP 1: Important! Explain what the user is trying to create and determine if a VPC is required
+	STEP 1: Important! List Down ALL REQUIRED ARGUMENTS FOR EACH RESOURCE.. Do NOT skip this step 
 	
 	STEP 2: Adding in Missing Resources: Add a VPC module using community modules in the user's prompt . Use Version 5.1.1 of the module. Please make the module as verbose as possible.This is an important step and should not be skipped. 
 	
@@ -52,6 +52,9 @@ func Prompts(message string) string {
 	Output Format: 
 
 	<three backticks>
+	#tfvars 
+	<Step 4 Output> (Terraform variables) 
+	#tfvars
 	<Step 5 Output (Complete, end to end)>
 	<three backticks>
 
@@ -74,12 +77,12 @@ func Prompts(message string) string {
 	STEP 1: Addition of Provider Block: Please add provider block regardless of provided information. This is an important step and should not be skipped. 
 	STEP 2: Please add a VPC moddule to the terraform configuration. VPC module should be as verbose as possible and all vpc provided attributes in config should be referred in relation to VPC module.
 	STEP 3: Please make sure any variables are preffered over hardcoded strings and every variable that is used is defined separately as part of the configuration.
-	Step 3: Combine the output of step 1 to step 3 which will result in a single terraform conffiguration. Now Output the terraform configuration delimited by three backticks.
+	STEP 4: Combine the output of step 1 to step 3 which will result in a single terraform conffiguration. Now Output the terraform configuration delimited by three backticks.
 
 
 	OUTPUT FORMAT:
 	<three backticks>
-	<Step 5 Output (Complete, end to end)>
+	<Step 4 Output (Complete, end to end)>
 	<three backticks>
 	
 
